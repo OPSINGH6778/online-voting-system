@@ -1,0 +1,28 @@
+{
+  "version": 2,
+  "framework": "nextjs",
+  "installCommand": "npm install --legacy-peer-deps",
+  "buildCommand": "npm run build",
+  "devCommand": "npm run dev",
+  "env": {
+    "MONGODB_URI": "mongodb+srv://opsingh26122002_db_user:Admin%4012233344@cluster0.badygua.mongodb.net/?appName=Cluster0",
+    "ADMIN_EMAIL": "opsingh26122002@gmail.com",
+    "ADMIN_PASSWORD": "Admin@12233344",
+    "NEXTAUTH_SECRET": "svs-quantum-safe-secret-2026-opsingh6778",
+    "NEXT_PUBLIC_BASE_URL": "https://online-voting-system-self.vercel.app",
+    "NEXT_TELEMETRY_DISABLED": "1",
+    "NODE_ENV": "production"
+  },
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Frame-Options",        "value": "SAMEORIGIN" },
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "Referrer-Policy",        "value": "strict-origin-when-cross-origin" },
+        { "key": "X-XSS-Protection",       "value": "1; mode=block" },
+        { "key": "Permissions-Policy",     "value": "camera=(), microphone=(), geolocation=()" }
+      ]
+    }
+  ]
+}
