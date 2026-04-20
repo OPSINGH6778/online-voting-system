@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import bcrypt from 'bcryptjs';
+import bcrypt from 'bcryptjs';z
 
 // Safe URI: if Vercel env has <db_password> placeholder, fall back to hardcoded
 const _RAW = process.env.MONGODB_URI || '';
