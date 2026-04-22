@@ -14,51 +14,91 @@ async function requireAdmin(request: NextRequest) {
   return u;
 }
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+// GET /api/elections/[id]/results - Get election results
+export async function GET(
+  request: NextRequest, 
+  { params }: { params: Promise<{ id: string }> | { id: string } }
+) {
   try {
-    const el = await dbOperations.getElectionById(params.id);
-    if (!el) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-    return NextResponse.json({ election: el });
-  } catch (e) {
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
-  }
-}
-
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
-  try {
-    const admin = await requireAdmin(request);
-    if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
-    const data = await request.json();
-    // Validate cooldown
-    if (data.vote_cooldown !== undefined) {
-      data.vote_cooldown = Math.max(0, Math.min(86400, parseInt(String(data.vote_cooldown)) || 0));
+    // Handle params as Promise (Next.js 16 requirement)
+    const { id } = await params;
+    
+    const election = await dbOperations.getElectionById(id);
+    if (!election) {
+      return NextResponse.json({ error: 'Election not found' }, { status: 404 });
     }
-    const election = await dbOperations.updateElection(params.id, data);
-    if (!election) return NextResponse.json({ error: 'Election not found' }, { status: 404 });
-    await dbOperations.logActivity({
-      user_id: admin._id.toString(), user_email: admin.email,
-      action: `ELECTION_UPDATED: ${election.title} [${Object.keys(data).join(',')}]`,
-      category: 'election', status: 'success',
+    
+    // Get results
+    const results = await dbOperations.getElectionResults(id);
+    const totalVotes = results.reduce((sum: number, r: any) => sum + r.count, 0);
+    
+    // Get candidate details
+    const candidatesWithVotes = election.candidates.map((candidate: any) => {
+      const voteCount = results.find((r: any) => r._id === candidate.name)?.count || 0;
+      return {
+        ...candidate.toObject(),
+        votes: voteCount,
+        percentage: totalVotes > 0 ? ((voteCount / totalVotes) * 100).toFixed(2) : '0',
+      };
     });
-    return NextResponse.json({ election });
-  } catch (e: any) {
-    console.error(e);
-    return NextResponse.json({ error: e.message || 'Internal server error' }, { status: 500 });
+    
+    return NextResponse.json({ 
+      success: true,
+      election: {
+        id: election._id,
+        title: election.title,
+        description: election.description,
+        status: election.status,
+        totalVotes,
+        result_published: election.result_published,
+      },
+      results: candidatesWithVotes,
+    });
+  } catch (error: any) {
+    console.error('GET /api/elections/[id]/results error:', error);
+    return NextResponse.json({ 
+      error: 'Internal server error',
+      message: error.message 
+    }, { status: 500 });
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+// PATCH /api/elections/[id]/results - Publish results (admin only)
+export async function PATCH(
+  request: NextRequest, 
+  { params }: { params: Promise<{ id: string }> | { id: string } }
+) {
   try {
     const admin = await requireAdmin(request);
-    if (!admin) return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
-    await dbOperations.deleteElection(params.id);
-    await dbOperations.logActivity({
-      user_id: admin._id.toString(), user_email: admin.email,
-      action: `ELECTION_DELETED: ${params.id}`, category: 'election', status: 'success',
-    });
-    return NextResponse.json({ message: 'Election deleted' });
-  } catch (e: any) {
-    console.error(e);
-    return NextResponse.json({ error: e.message || 'Internal server error' }, { status: 500 });
+    if (!admin) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+    }
+    
+    const { id } = await params;
+    const { publish } = await request.json();
+    
+    if (publish) {
+      const election = await dbOperations.publishResult(id);
+      await dbOperations.logActivity({
+        user_id: admin._id.toString(),
+        user_email: admin.email,
+        action: `RESULTS_PUBLISHED: ${election.title}`,
+        category: 'election',
+        status: 'success',
+      });
+      return NextResponse.json({ 
+        success: true, 
+        message: 'Results published successfully',
+        election 
+      });
+    }
+    
+    return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
+  } catch (error: any) {
+    console.error('PATCH /api/elections/[id]/results error:', error);
+    return NextResponse.json({ 
+      error: 'Internal server error',
+      message: error.message 
+    }, { status: 500 });
   }
 }

@@ -1,0 +1,88 @@
+# Dependencies
+node_modules
+npm-debug.log
+yarn-error.log
+
+# Build outputs
+.next
+out
+build
+dist
+
+# Development files
+.DS_Store
+*.pem
+*.log
+.env
+.env*.local
+.env*.development
+.env*.test
+
+# IDE files
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# Documentation
+README.md
+README.*.md
+CONTRIBUTING.md
+LICENSE
+DEPLOYMENT_GUIDE.md
+MONGODB_SETUP.md
+PRODUCTION_README.md
+UPLOAD_NOW.md
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# GitHub
+.github
+.github/**/*
+
+# Testing
+coverage
+.nyc_output
+test
+tests
+*.test.js
+*.spec.js
+
+# Temporary files
+tmp
+temp
+*.tmp
+*.temp
+
+# Logs
+logs
+*.log
+
+# OS files
+Thumbs.db
+Desktop.ini
+
+# Scripts
+scripts
+deploy.sh
+*.sh
+
+# Configuration files (keep only essential ones)
+vercel.json
+.next-config.js
+postcss.config.js
+tailwind.config.js
+tsconfig.json
+*.md
+
+# Local MongoDB data
+data
+dump
+
+# Environment specific
+.env.production.local
+.env.development.local
